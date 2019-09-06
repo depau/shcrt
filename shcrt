@@ -33,6 +33,18 @@ function win_path_to_wsl {
   fi
 }
 
+function copy_to_clipboard {
+  if is_wsl; then
+    cat - | /mnt/c/Windows/System32/clip.exe
+  elif [[ "$WAYLAND_DISPLAY" != "" ]] && which wl-copy > /dev/null; then
+    cat - | wl-copy
+  elif which xclip > /dev/null; then
+    cat - | xclip -selection clipboard
+  else
+    return 1
+  fi
+}
+
 function scrt_session_path {
   if is_wsl; then
     appdata="$(wsl_win_var '%APPDATA%' | win_path_to_wsl)"
@@ -123,6 +135,17 @@ function scrt_menu {
   fi
 }
 
+function scrt_has_password {
+  cat "$1" | grep -q '"Password"'
+  return $?
+}
+
+function scrt_get_cleartext_pwd {
+  session="$1"
+  encrypted="$(cat "$session" | grep '"Password"' | cut -d '=' -f 2 | cut -c 1 --complement)"
+  "$DIR/SecureCRTCipher.py" dec "$encrypted"
+}
+
 function scrt_session {
   if [[ "$mode" == "dialog" ]] || [[ "$supermode" == "dialog" ]]; then
     clear
@@ -135,6 +158,19 @@ function scrt_session {
   echo
   echo "Commands:"
   "$DIR/crt2foss.py" "$session_path/../" "$session"
+
+  if scrt_has_password "$session"; then
+    echo
+    if scrt_get_cleartext_pwd "$session" | copy_to_clipboard; then
+      echo "Password copied to clipboard."
+    else
+      echo "Unable to copy password to clipboard."
+      read -p "Do you want me to print it to the console? [yN] " yn
+      case $yn in
+        [Yy]*) scrt_get_cleartext_pwd "$session";;
+      esac
+    fi
+  fi    
 }
 
 function main {
