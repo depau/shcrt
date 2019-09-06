@@ -9,13 +9,21 @@ function is_wsl {
   return $?
 }
 
+function wsl_win_var {
+  /mnt/c/Windows/System32/cmd.exe /C "echo $1"
+}
+
 function win_path_to_wsl {
-  echo "$1" | sed '[\]|/|g'
+  if [[ "$1" != "" ]]; then
+    echo "$1" | sed -e 's|\\|/|g' -e 's|\(.*\):|/mnt/\L\1|'
+  else
+    cat - | sed -e 's|\\|/|g' -e 's|\(.*\):|/mnt/\L\1|'
+  fi
 }
 
 function scrt_session_path {
   if is_wsl; then
-    appdata="$(cmd.exe /C 'echo %APPDATA%')"
+    appdata="$(wsl_win_var '%APPDATA%' | win_path_to_wsl)"
     echo "$appdata/VanDyke/Config/Sessions"
   else
     echo "$HOME/.vandyke/SecureCRT/Config/Sessions"
@@ -26,10 +34,10 @@ session_path="$(scrt_session_path)"
 current_path=""
 
 function scrt_cd {
-  if [ ! -d "$session_path/$current_path" ]; then
+  if [ ! -d "$session_path/$current_path/$1" ]; then
     return 1
   fi
-  current_path="$current_path/$1"
+  current_path="$(realpath -m --relative-to "$session_path" "$current_path/$1")"
 }
 
 function scrt_ls {
