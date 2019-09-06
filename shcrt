@@ -2,8 +2,18 @@
 
 export supermode="dialog"
 
-export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:./easybashgui/lib"
-export PATH="$PATH:./easybashgui/src"
+# Determine script location
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:$DIR/easybashgui/lib"
+export PATH="$PATH:$DIR/easybashgui/src"
 source easybashgui
 
 function is_wsl {
@@ -86,8 +96,6 @@ function scrt_ls {
 function scrt_menu {
   listing="$(scrt_ls)"
   menu_listing="$(echo "$listing" | cut -d "\\" -f 1)"
-  echo "LISTING"
-  echo "$listing"
 
   IFSBAK="$IFS"
   IFS=$'\n'
@@ -102,11 +110,9 @@ function scrt_menu {
     scrt_cd "$choice"
     scrt_menu
   elif [ -f "$choice_path" ]; then
-    echo "$choice_path"
-    return
+    scrt_session "$choice_path"
   elif [[ "$menu_choice" == "" ]]; then
     scrt_cd ..
-    echo "$current_path"
     if [[ "$current_path" == "" ]] || [[ "$current_path" == ".." ]]; then
       return
     else
@@ -115,6 +121,20 @@ function scrt_menu {
   else
     alert_message "Could not find selected item \"$menu_choice\""
   fi
+}
+
+function scrt_session {
+  if [[ "$mode" == "dialog" ]] || [[ "$supermode" == "dialog" ]]; then
+    clear
+  fi
+
+  session="$1"
+  echo
+  echo "Session file:"
+  echo "$session"
+  echo
+  echo "Commands:"
+  "$DIR/crt2foss.py" "$session_path/../" "$session"
 }
 
 function main {
