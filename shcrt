@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export supermode="dialog"
+
 export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:./easybashgui/lib"
 export PATH="$PATH:./easybashgui/src"
 source easybashgui
@@ -30,16 +32,95 @@ function scrt_session_path {
   fi
 }
 
+if is_wsl; then
+  dir_char="+"
+  file_char=" "
+else
+  dir_char="📁"
+  file_char="🔗"
+fi
+
 session_path="$(scrt_session_path)"
 current_path=""
 
 function scrt_cd {
-  if [ ! -d "$session_path/$current_path/$1" ]; then
+  newdir="$session_path/$current_path/$1"
+  if [ ! -d "$newdir" ]; then
     return 1
   fi
-  current_path="$(realpath -m --relative-to "$session_path" "$current_path/$1")"
+  current_path="$(realpath --no-symlinks --relative-to "$session_path" "$newdir")"
+}
+
+function scrt_pwd {
+  echo "$session_path/$current_path"
+}
+
+function find_dirs_or_symlinks {
+  while read -r name; do
+    [ -d "$name" ] && echo "$name";
+  done < <(find $@)
+}
+
+function find_files_or_symlinks {
+  while read -r name; do
+    [ -f "$name" ] && echo "$name";
+  done < <(find $@)
 }
 
 function scrt_ls {
-  return 1;
+  cwd="$(pwd)"
+  cd "$(scrt_pwd)"
+
+  find_dirs_or_symlinks -maxdepth 1 -mindepth 1 | sort | sed "s|./||" | while read dir; do
+    echo "$dir_char $dir\\$dir"
+  done
+
+  find_files_or_symlinks -maxdepth 1 -mindepth 1 | grep '.ini$' | grep -v 'Default.ini' | grep -v '__FolderData__.ini' | sort | sed 's|./||' | while read file; do
+    proto="$(cat "$file" | grep 'S:"Protocol Name"' | cut -d '=' -f 2 | sed 's|\r||g')"
+    echo "$file_char $(echo "$file" | sed 's/.ini$//') ($proto)\\$file"
+  done
+
+  cd "$cwd"
 }
+
+function scrt_menu {
+  listing="$(scrt_ls)"
+  menu_listing="$(echo "$listing" | cut -d "\\" -f 1)"
+  echo "LISTING"
+  echo "$listing"
+
+  IFSBAK="$IFS"
+  IFS=$'\n'
+  menu $menu_listing
+  IFS="$IFSBAK"
+
+  menu_choice="$(0< "${dir_tmp}/${file_tmp}" )"
+  choice="$(echo "$listing" | grep "$menu_choice" | cut -d "\\" -f 2)"
+  choice_path="$(scrt_pwd)/$choice"
+
+  if [ -d "$choice_path" ]; then
+    scrt_cd "$choice"
+    scrt_menu
+  elif [ -f "$choice_path" ]; then
+    echo "$choice_path"
+    return
+  elif [[ "$menu_choice" == "" ]]; then
+    scrt_cd ..
+    if [[ "$current_path" == "" ]]; then
+      return
+    fi
+  else
+    alert_message "Could not find selected item \"$menu_choice\""
+  fi
+}
+
+function main {
+  scrt_menu
+  if [[ "$mode" == "$dialog" ]] || [[ "$supermode" == "dialog" ]]; then
+    clear
+  fi
+}
+
+# Run if not sourced
+BASH_SOURCE=".$0"
+test ".$0" != ".$BASH_SOURCE" || main $@
