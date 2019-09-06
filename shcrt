@@ -1,0 +1,37 @@
+#!/bin/bash
+
+export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:./easybashgui/lib"
+export PATH="$PATH:./easybashgui/src"
+source easybashgui
+
+function is_wsl {
+  grep -q Microsoft /proc/version
+  return $?
+}
+
+function win_path_to_wsl {
+  echo "$1" | sed '[\]|/|g'
+}
+
+function scrt_session_path {
+  if is_wsl; then
+    appdata="$(cmd.exe /C 'echo %APPDATA%')"
+    echo "$appdata/VanDyke/Config/Sessions"
+  else
+    echo "$HOME/.vandyke/SecureCRT/Config/Sessions"
+  fi
+}
+
+session_path="$(scrt_session_path)"
+current_path=""
+
+function scrt_cd {
+  if [ ! -d "$session_path/$current_path" ]; then
+    return 1
+  fi
+  current_path="$current_path/$1"
+}
+
+function scrt_ls {
+  return 1;
+}
