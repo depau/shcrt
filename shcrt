@@ -106,8 +106,11 @@ function scrt_menu {
     return
   elif [[ "$menu_choice" == "" ]]; then
     scrt_cd ..
-    if [[ "$current_path" == "" ]]; then
+    echo "$current_path"
+    if [[ "$current_path" == "" ]] || [[ "$current_path" == ".." ]]; then
       return
+    else
+      scrt_menu
     fi
   else
     alert_message "Could not find selected item \"$menu_choice\""
@@ -116,9 +119,6 @@ function scrt_menu {
 
 function main {
   scrt_menu
-  if [[ "$mode" == "$dialog" ]] || [[ "$supermode" == "dialog" ]]; then
-    clear
-  fi
 }
 
 # Run if not sourced

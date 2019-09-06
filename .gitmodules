@@ -1,3 +1,6 @@
 [submodule "easybashgui"]
 	path = easybashgui
 	url = https://github.com/BashGui/easybashgui.git
+[submodule "decrypt"]
+	path = decrypt
+	url = https://github.com/DoubleLabyrinth/how-does-SecureCRT-encrypt-password.git
