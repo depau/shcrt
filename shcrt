@@ -57,13 +57,23 @@ function scrt_session_path {
 if is_wsl; then
   dir_char="+"
   file_char=" "
+  search_entry="> Search"
+  up_entry=".. Back"
+  exit_search_entry="X  Exit search"
+  query_question="Enter search query: "
+  now_at_entry="Now at: "
 else
   dir_char="📁"
   file_char="🔗"
+  search_entry="🔍 Search"
+  up_entry="↩️  .. Back"
+  exit_search_entry="❌ Exit search"
+  query_question="🔍 Enter search query: "
+  now_at_entry="📍 Now at: "
 fi
 
 session_path="$(scrt_session_path)"
-current_path=""
+current_path="."
 
 function scrt_cd {
   newdir="$session_path/$current_path/$1"
@@ -105,31 +115,92 @@ function scrt_ls {
   cd "$cwd"
 }
 
+function scrt_find {
+  query="$1"
+  (
+    find "$session_path/$current_path" -type d -iname '*'"$query"'*'
+    find "$session_path/$current_path" -type f -iname '*'"$query"'*.ini$' | grep -v "__FolderData__.ini" | grep -v "Default.ini"
+  )| while read result; do
+    if basename "$result" | grep -qi "$query"; then
+      realpath --relative-to "$session_path/$current_path" "$result"
+    fi
+  done
+}
+
+function scrt_search {
+  input 1 "$query_question"
+  query="$(cat "${dir_tmp}/${file_tmp}")"
+  query="${query#"$query_question"}"
+
+  if [[ "$query" == "" ]]; then
+    return 1
+  fi
+
+  results="$(scrt_find "$query")"
+
+  if [[ "$results" == "" ]]; then
+    alert_message "No results"
+    return 1;
+  fi
+
+  IFSBAK="$IFS"
+  IFS=$'\n'
+  menu "$exit_search_entry" $results
+  IFS="$IFSBAK"
+
+  menu_choice="$(0< "${dir_tmp}/${file_tmp}" )"
+  if [[ "$menu_choice" == "$exit_search_entry" ]]; then
+    return 1
+  else
+    choice_path="$(scrt_pwd)/$menu_choice"
+    if [ -d "$choice_path" ]; then
+      scrt_cd "$menu_choice"
+      return 1
+    else
+      scrt_session "$menu_choice"
+    fi
+  fi
+}
+
 function scrt_menu {
   listing="$(scrt_ls)"
   menu_listing="$(echo "$listing" | cut -d "\\" -f 1)"
 
+  now_at="$(echo "$current_path" | sed -e 's|^[.]|/|' -e 's|//|/|')"
+
   IFSBAK="$IFS"
   IFS=$'\n'
-  menu $menu_listing
+  if [[ "$current_path" != "" ]] && [[ "$current_path" != "." ]]; then
+    menu "$now_at_entry $now_at" "$search_entry" "$up_entry" $menu_listing
+  else
+    menu "$now_at_entry $now_at" "$search_entry" $menu_listing
+  fi
   IFS="$IFSBAK"
 
   menu_choice="$(0< "${dir_tmp}/${file_tmp}" )"
   choice="$(echo "$listing" | grep "$menu_choice" | cut -d "\\" -f 2)"
   choice_path="$(scrt_pwd)/$choice"
-
-  if [ -d "$choice_path" ]; then
-    scrt_cd "$choice"
-    scrt_menu
-  elif [ -f "$choice_path" ]; then
-    scrt_session "$choice_path"
-  elif [[ "$menu_choice" == "" ]]; then
+  
+  if [[ "$menu_choice" == "" ]] || [[ "$menu_choice" == "$up_entry" ]]; then
     scrt_cd ..
     if [[ "$current_path" == "" ]] || [[ "$current_path" == ".." ]]; then
       return
     else
       scrt_menu
     fi
+  elif [[ "$menu_choice" == "$search_entry" ]]; then
+    if scrt_search; then
+      return
+    else
+      scrt_menu
+    fi
+  elif [[ "$menu_choice" == "$now_at_entry"* ]]; then
+    scrt_menu
+  elif [ -d "$choice_path" ]; then
+    scrt_cd "$choice"
+    scrt_menu
+  elif [ -f "$choice_path" ]; then
+    scrt_session "$choice_path"
   else
     alert_message "Could not find selected item \"$menu_choice\""
   fi
