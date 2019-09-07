@@ -245,6 +245,10 @@ function scrt_session {
 }
 
 function main {
+  if [ ! -d "$session_path" ]; then
+    alert_message "SecureCRT session path not found.\nLooked for it at:\n$session_path"
+    return 1
+  fi
   scrt_menu
 }
 
