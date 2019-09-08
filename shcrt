@@ -2,6 +2,15 @@
 
 export supermode="dialog"
 
+function is_wsl {
+  grep -q Microsoft /proc/version
+  return $?
+}
+
+if is_wsl; then
+  alias zenity=zenity.exe
+fi
+
 # Determine script location
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -15,14 +24,8 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:$DIR/easybashgui/lib"
 export PATH="$PATH:$DIR/easybashgui/src"
 source easybashgui
-
-function is_wsl {
-  grep -q Microsoft /proc/version
-  return $?
-}
-
 function wsl_win_var {
-  /mnt/c/Windows/System32/cmd.exe /C "echo $1" | sed 's/\r\n/\n/g'
+  /mnt/c/Windows/System32/cmd.exe /C "echo $1" | sed 's/\r//g'
 }
 
 function win_path_to_wsl {
@@ -186,11 +189,10 @@ function scrt_menu {
   choice="$(echo "$listing" | grep "$menu_choice" | cut -d "\\" -f 2)"
   choice_path="$(scrt_pwd)/$choice"
 
-  echo "HERE MENU"
-  echo "'$menu_choice' '$up_entry' '$search_entry'"
-  echo "'$choice'"
-  echo "'$choice_path'"
-  read
+  #echo "HERE MENU"
+  #echo "'$menu_choice' '$up_entry' '$search_entry'"
+  #echo "'$choice'"
+  #echo "'$choice_path'"
 
   if [[ "$menu_choice" == "" ]] || [[ "$menu_choice" == "$up_entry" ]]; then
     scrt_cd ..
@@ -224,8 +226,13 @@ function scrt_has_password {
 
 function scrt_get_cleartext_pwd {
   session="$1"
-  encrypted="$(cat "$session" | grep '"Password"' | cut -d '=' -f 2 | cut -c 1 --complement)"
-  "$DIR/SecureCRTCipher.py" dec "$encrypted"
+  encrypted="$(cat "$session" | grep '"Password V2"' | cut -d '=' -f 2 | cut -c 1-3 --complement | sed 's/\r//g')"
+  if [[ "$encrypted" == "" ]]; then
+    encrypted="$(cat "$session" | grep '"Password"' | cut -d '=' -f 2 | cut -c 1 --complement | sed 's/\r//g')"
+    "$DIR/SecureCRTCipher.py" dec "$encrypted"
+  else
+    "$DIR/SecureCRTCipher.py" dec -v2 "$encrypted"
+  fi
 }
 
 function scrt_session {
@@ -243,7 +250,7 @@ function scrt_session {
 
   if scrt_has_password "$session"; then
     echo
-    if scrt_get_cleartext_pwd "$session" | copy_to_clipboard; then
+    if scrt_get_cleartext_pwd "$session" | sed -e 's/\r//g' -e 's/\n//g' | copy_to_clipboard; then
       echo "Password copied to clipboard."
     else
       echo "Unable to copy password to clipboard."
