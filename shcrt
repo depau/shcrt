@@ -22,7 +22,7 @@ function is_wsl {
 }
 
 function wsl_win_var {
-  /mnt/c/Windows/System32/cmd.exe /C "echo $1"
+  /mnt/c/Windows/System32/cmd.exe /C "echo $1" | sed 's/\r\n/\n/g'
 }
 
 function win_path_to_wsl {
