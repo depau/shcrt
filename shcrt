@@ -45,6 +45,11 @@ function copy_to_clipboard {
   fi
 }
 
+# Escape bash variables
+function no_dollars {
+  sed 's/\$/\\$/g'
+}
+
 function scrt_session_path {
   if is_wsl; then
     appdata="$(wsl_win_var '%APPDATA%' | win_path_to_wsl)"
@@ -66,7 +71,7 @@ else
   dir_char="📁"
   file_char="🔗"
   search_entry="🔍 Search"
-  up_entry="↩️  .. Back"
+  up_entry="↩️ .. Back"
   exit_search_entry="❌ Exit search"
   query_question="🔍 Enter search query: "
   now_at_entry="📍 Now at: "
@@ -136,7 +141,7 @@ function scrt_search {
     return 1
   fi
 
-  results="$(scrt_find "$query")"
+  results="$(scrt_find "$query" | no_dollars)"
 
   if [[ "$results" == "" ]]; then
     alert_message "No results"
@@ -164,23 +169,29 @@ function scrt_search {
 
 function scrt_menu {
   listing="$(scrt_ls)"
-  menu_listing="$(echo "$listing" | cut -d "\\" -f 1)"
+  menu_listing="$(echo "$listing" | cut -d "\\" -f 1 | no_dollars)"
 
-  now_at="$(echo "$current_path" | sed -e 's|^[.]|/|' -e 's|//|/|')"
+  now_at="$(echo "$current_path" | sed -e 's|^[.]|/|' -e 's|//|/|' | no_dollars)"
 
   IFSBAK="$IFS"
   IFS=$'\n'
   if [[ "$current_path" != "" ]] && [[ "$current_path" != "." ]]; then
-    menu "$now_at_entry $now_at" "$search_entry" "$up_entry" $menu_listing
+    menu "$now_at_entry $now_at" "$search_entry" "$up_entry" "$menu_listing"
   else
-    menu "$now_at_entry $now_at" "$search_entry" $menu_listing
+    menu "$now_at_entry $now_at" "$search_entry" "$menu_listing"
   fi
   IFS="$IFSBAK"
 
   menu_choice="$(0< "${dir_tmp}/${file_tmp}" )"
   choice="$(echo "$listing" | grep "$menu_choice" | cut -d "\\" -f 2)"
   choice_path="$(scrt_pwd)/$choice"
-  
+
+  echo "HERE MENU"
+  echo "'$menu_choice' '$up_entry' '$search_entry'"
+  echo "'$choice'"
+  echo "'$choice_path'"
+  read
+
   if [[ "$menu_choice" == "" ]] || [[ "$menu_choice" == "$up_entry" ]]; then
     scrt_cd ..
     if [[ "$current_path" == "" ]] || [[ "$current_path" == ".." ]]; then
