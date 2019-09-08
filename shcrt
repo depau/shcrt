@@ -144,7 +144,7 @@ function scrt_search {
     return 1
   fi
 
-  results="$(scrt_find "$query" | no_dollars)"
+  results="$(scrt_find "$query")"
 
   if [[ "$results" == "" ]]; then
     alert_message "No results"
