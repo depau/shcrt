@@ -1,6 +1,21 @@
 #!/bin/bash
 
+############ Script config #############
+## GUI mode
+#
+# Console based:
+# dialog - ncurses, runs fine on WSL
+# none - works everywhere
+#
+# GUI based:
+# yad, gtkdialog, kdialog, Xdialog - GNU/Linux only
+# zenity - Windows port available, doesn't work very well because Microsoft is a little bitch and
+#   argument passing between Linux and Windows doesn't work well.
 export supermode="dialog"
+
+## Emojis - auto, yes, no
+export emojis="auto"
+########### /Script config #############
 
 function is_wsl {
   grep -q Microsoft /proc/version
@@ -20,6 +35,8 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+export supertitle="shcrt"
 
 export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:$DIR/easybashgui/lib"
 export PATH="$PATH:$DIR/easybashgui/src"
@@ -62,7 +79,7 @@ function scrt_session_path {
   fi
 }
 
-if is_wsl; then
+if [[ "$emojis" == "no" ]] || ([[ "$emojis" != "yes" ]] && is_wsl); then
   dir_char="+"
   file_char=" "
   search_entry="> Search"
