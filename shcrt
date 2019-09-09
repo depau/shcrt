@@ -11,7 +11,7 @@
 # yad, gtkdialog, kdialog, Xdialog - GNU/Linux only
 # zenity - Windows port available, doesn't work very well because Microsoft is a little bitch and
 #   argument passing between Linux and Windows doesn't work well.
-export supermode="dialog"
+export supermode="zenity"
 
 ## Emojis - auto, yes, no
 export emojis="auto"
@@ -42,7 +42,7 @@ export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:$DIR/easybashgui/lib"
 export PATH="$PATH:$DIR/easybashgui/src"
 source easybashgui
 function wsl_win_var {
-  cmd.exe /C "echo $1" | sed 's/\r//g'
+  cmd.exe /C "echo $1" | tr -d '\r'
 }
 
 function win_path_to_wsl {
@@ -133,7 +133,7 @@ function scrt_ls {
   done
 
   find_files_or_symlinks -maxdepth 1 -mindepth 1 | grep '.ini$' | grep -v 'Default.ini' | grep -v '__FolderData__.ini' | sort | sed 's|./||' | while read file; do
-    proto="$(cat "$file" | grep 'S:"Protocol Name"' | cut -d '=' -f 2 | sed 's|\r||g')"
+    proto="$(cat "$file" | grep 'S:"Protocol Name"' | cut -d '=' -f 2 | tr -d '\r')"
     echo "$file_char $(echo "$file" | sed 's/.ini$//') ($proto)\\$file"
   done
 
@@ -243,9 +243,9 @@ function scrt_has_password {
 
 function scrt_get_cleartext_pwd {
   session="$1"
-  encrypted="$(cat "$session" | grep '"Password V2"' | cut -d '=' -f 2 | cut -c 1-3 --complement | sed 's/\r//g')"
+  encrypted="$(cat "$session" | grep '"Password V2"' | cut -d '=' -f 2 | cut -c 1-3 --complement | tr -d '\r')"
   if [[ "$encrypted" == "" ]]; then
-    encrypted="$(cat "$session" | grep '"Password"' | cut -d '=' -f 2 | cut -c 1 --complement | sed 's/\r//g')"
+    encrypted="$(cat "$session" | grep '"Password"' | cut -d '=' -f 2 | cut -c 1 --complement | tr -d '\r')"
     "$DIR/SecureCRTCipher.py" dec "$encrypted"
   else
     "$DIR/SecureCRTCipher.py" dec -v2 "$encrypted"
@@ -267,7 +267,7 @@ function scrt_session {
 
   if scrt_has_password "$session"; then
     echo
-    if scrt_get_cleartext_pwd "$session" | sed -e 's/\r//g' -e 's/\n//g' | copy_to_clipboard; then
+    if scrt_get_cleartext_pwd "$session" | tr -d '\r\n' | copy_to_clipboard; then
       echo "Password copied to clipboard."
     else
       echo "Unable to copy password to clipboard."
