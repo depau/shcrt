@@ -1,6 +1,9 @@
 #!/bin/bash
 
 ############ Script config #############
+## Config can also be placed in ~/.shcrtrc
+source ~/.shcrtrc
+
 ## GUI mode
 #
 # Console based:
@@ -11,7 +14,7 @@
 # yad, gtkdialog, kdialog, Xdialog - GNU/Linux only
 # zenity - Windows port available, doesn't work very well because Microsoft is a little bitch and
 #   argument passing between Linux and Windows doesn't work well.
-export supermode="zenity"
+#export supermode="zenity"
 
 ## Emojis - auto, yes, no
 export emojis="auto"
