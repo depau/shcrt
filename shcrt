@@ -17,7 +17,7 @@ source ~/.shcrtrc 2> /dev/null
 #export supermode="zenity"
 
 ## Emojis - auto, yes, no
-export emojis="auto"
+#export emojis="auto"
 
 ## Custom SecureCRT config path
 # Set to override defaults:
