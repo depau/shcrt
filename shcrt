@@ -18,6 +18,14 @@ source ~/.shcrtrc 2> /dev/null
 
 ## Emojis - auto, yes, no
 export emojis="auto"
+
+## Custom SecureCRT config path
+# Set to override defaults:
+# - GNU/Linux: ~/.vandyke/SecureCRT/Config
+# - Windows:   %APPDATA%/VanDyke/Config
+# On WSL it needs to be a Linux path!
+
+#export crtconfig="/your/path/to/Config"
 ########### /Script config #############
 
 function is_wsl {
@@ -76,11 +84,15 @@ function no_dollars {
 }
 
 function scrt_session_path {
-  if is_wsl; then
-    appdata="$(wsl_win_var '%APPDATA%' | win_path_to_wsl)"
-    echo "$appdata/VanDyke/Config/Sessions"
+  if [[ "$crtconfig" != "" ]]; then
+    echo "$crtconfig/Sessions"
   else
-    echo "$HOME/.vandyke/SecureCRT/Config/Sessions"
+    if is_wsl; then
+      appdata="$(wsl_win_var '%APPDATA%' | win_path_to_wsl)"
+      echo "$appdata/VanDyke/Config/Sessions"
+    else
+      echo "$HOME/.vandyke/SecureCRT/Config/Sessions"
+    fi
   fi
 }
 

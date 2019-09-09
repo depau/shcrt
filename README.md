@@ -65,6 +65,15 @@ export emojis=YOUR_CHOIC
 - `auto`: always display emojis on GNU/Linux, disabled on WSL because of crappy terminal
 - `yes`, `no`: force enable/disable
 
+### Custom SecureCRT config path
+```bash
+export crtconfig="/path/to/your/Config"
+```
+
+Overrides default SecureCRT config paths:
+- GNU/Linux: `~/.vandyke/SecureCRT/Config`
+- Windows: `%APPDATA%/VanDyke/Config` (⇒ usually `/mnt/c/Users/your.user/AppData/VanDyke/Config`)
+
 ## Bugs
 
 I expect it to be full of bugs; so should you.
