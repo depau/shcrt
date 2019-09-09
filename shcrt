@@ -2,7 +2,7 @@
 
 ############ Script config #############
 ## Config can also be placed in ~/.shcrtrc
-source ~/.shcrtrc
+source ~/.shcrtrc 2> /dev/null
 
 ## GUI mode
 #
