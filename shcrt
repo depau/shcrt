@@ -263,7 +263,7 @@ function scrt_session {
   session="$1"
   echo
   echo "Session file:"
-  echo "$session"
+  realpath --no-symlinks "$session"
   echo
   echo "Commands:"
   "$DIR/crt2foss.py" "$session_path/../" "$session"
