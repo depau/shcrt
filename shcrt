@@ -42,7 +42,7 @@ export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:$DIR/easybashgui/lib"
 export PATH="$PATH:$DIR/easybashgui/src"
 source easybashgui
 function wsl_win_var {
-  /mnt/c/Windows/System32/cmd.exe /C "echo $1" | sed 's/\r//g'
+  cmd.exe /C "echo $1" | sed 's/\r//g'
 }
 
 function win_path_to_wsl {
@@ -55,7 +55,7 @@ function win_path_to_wsl {
 
 function copy_to_clipboard {
   if is_wsl; then
-    cat - | /mnt/c/Windows/System32/clip.exe
+    cat - | clip.exe
   elif [[ "$WAYLAND_DISPLAY" != "" ]] && which wl-copy > /dev/null; then
     cat - | wl-copy
   elif which xclip > /dev/null; then
