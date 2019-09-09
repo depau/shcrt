@@ -49,18 +49,37 @@ At the time of writing, supported modes are:
 - `dialog`: ncurses terminal based GUI (good for WSL)
 - `whiptail`: another terminal based GUI (good for WSL)
 - `none`: uses internal shell-based EBG GUI, which uses `echo` and `read`
-- `zenity`, `yad`, `gtkdialog`, `xdialog`: GTK-based GUIs for GNOME-based desktops
+- `zenity`: GTK-based GUI for GNOME-base desktops, with a Windows port (see below)
+- `yad`, `gtkdialog`, `xdialog`: other GTK-based GUIs for GNOME-based desktops
 - `kdialog`: Qt5-based GUI for KDE or Qt-based desktops
 
-Needless to say, unless you're using `none` the desired GUI back-end needs to be installed.
+Needless to say, unless you're using `none`, the desired GUI back-end needs to be installed.
 
-The script includes an experimental wrapper for [native Windows Zenity](https://github.com/kvaps/zenity-windows/) on WSL.
-It displays but it doesn't actually work, probably due to Windows line endings needing to be fixed.
+If you're using WSL and you don't want to use a terminal-based GUI, you need an X11 server such as [VcXsrv](https://sourceforge.net/projects/vcxsrv/).
+Otherwise you can use Zenity for Windows.
 
+#### Zenity on Windows
+
+The script includes an experimental wrapper for [native Windows Zenity](https://github.com/maravento/winzenity) on WSL.
+
+To make it work, you need to:
+- Download WinZenity: https://github.com/maravento/winzenity
+- Place it somewhere in your Windows drive (i.e. `C:\Program Files\zenity.exe`)
+- Add this line to your `~/.shcrtrc`:
+  ```bash
+  alias zenity.exe="'/mnt/c/path/to/your/zenity.exe'"
+  # for example
+  alias zenity.exe="'/mnt/c/Program Files/zenity.exe'"
+  ```
+- Notice how you need to put double quotes to take into account for the spaces in the file path.
+ 
 ### Emojis
 ```bash
-export emojis=YOUR_CHOIC
+export emojis=YOUR_CHOICE
 ```
+
+Force enable/disable emojis. Emojis are enabled by default on GNU/Linux, and disabled on WSL.
+If you're using a custom terminal that supports emojis you can force-enable them on Windows too.
 
 - `auto`: always display emojis on GNU/Linux, disabled on WSL because of crappy terminal
 - `yes`, `no`: force enable/disable
