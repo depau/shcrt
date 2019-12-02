@@ -15,6 +15,12 @@ At early stages, not heavily tested. Alpha quality.
 
 ## How to use
 
+### Arch Linux (including Arch on WSL)
+
+AUR package: https://aur.archlinux.org/packages/shcrt-git/
+
+### Other distributions (including WSL)
+
 It should work both natively on GNU/Linux and on Windows under WSL, provided you have
 `bash`, `python3`, `pycrypto` for Python3 and your favorite dialog tool
 ((c)`dialog` works everywhere).
