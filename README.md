@@ -6,6 +6,8 @@ It should also work on macOS with some changes but YMMV.
 
 Beta quality. I use it on a daily basis, it should work in most cases.
 
+![Screenshot](https://i.postimg.cc/C57BG5Nf/screen.png)
+
 ## Features
 
 - Browse SecureCRT sessions
