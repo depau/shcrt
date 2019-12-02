@@ -56,7 +56,6 @@ It must be set to one of the GUI back-ends supported by [EasyBashGUI](https://gi
 At the time of writing, supported modes are:
 
 - `dialog`: ncurses terminal based GUI (good for WSL)
-- `whiptail`: another terminal based GUI (good for WSL)
 - `none`: uses internal shell-based EBG GUI, which uses `echo` and `read`
 - `zenity`: GTK-based GUI for GNOME-base desktops, with a Windows port (see below)
 - `yad`, `gtkdialog`, `xdialog`: other GTK-based GUIs for GNOME-based desktops
