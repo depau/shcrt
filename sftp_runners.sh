@@ -63,10 +63,13 @@ function sftp_uri_from_ssh_cmd {
 
 function run_filezilla {
   if is_wsl; then
-    if [ -f "/mnt/c/Program Files (x86)/FileZilla FTP Client/filezilla.exe" ]; then
-      local fz_cmd="/mnt/c/Program Files (x86)/FileZilla FTP Client/filezilla.exe"
+    local x86="$(wsl_win_var "ProgramFiles" | win_path_to_wsl)/FileZilla FTP Client/filezilla.exe"
+    local x86_64="$(wsl_win_var "ProgramW6432" | win_path_to_wsl)/FileZilla FTP Client/filezilla.exe"
+
+    if [ -f "$x86_64" ]; then
+      local fz_cmd="$x86_64"
     else
-      local fz_cmd="/mnt/c/Program Files/FileZilla FTP Client/filezilla.exe"
+      local fz_cmd="$x86"
     fi
   else
     local fz_cmd="filezilla"
