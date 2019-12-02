@@ -352,10 +352,8 @@ function scrt_session_exec_ssh {
 function scrt_session_exec_sftp {
   local session="$1"
   
-  (type "sftp_client_runner") 2>&1 >/dev/null
-
-  if [[ "$?" != 0 ]]; then
-    alert_message "You need to provide an SFTP client helper.\n\nYou can either provide it as a function named\n'sftp_client_runner' in ~/.shcrtrc or place it in \$PATH"
+  if [[ "$sftp_client_runner" == "" ]]; then
+    alert_message "You need to provide an SFTP client helper.\nYou can set one in ~/.shcrtrc."
     return 1
   fi
   
@@ -363,8 +361,8 @@ function scrt_session_exec_sftp {
 
   echo
 
-  cmd="$("$DIR/crt2foss.py" "$session_path/../" "$session" | grep '^ssh' | sed 's/^ssh/sftp_client_runner/')"
-  $cmd
+  cmd="$("$DIR/crt2foss.py" "$session_path/../" "$session" | grep '^ssh' | sed 's/^ssh //')"
+  "$sftp_client_runner" $cmd
   exit
 }
 

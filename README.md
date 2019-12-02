@@ -113,9 +113,7 @@ A FileZilla helper is provided and it should work on GNU/Linux and Windows on WS
 To enable it, add the following to your `.shcrtrc`:
 
 ```bash
-function sftp_client_runner {
-  run_filezilla "$@";
-}
+export sftp_client_runner=run_filezilla
 ```
 
 The FileZilla helper source code can be found in `sftp_runners.sh`
