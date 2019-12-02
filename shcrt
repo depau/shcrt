@@ -1,9 +1,9 @@
 #!/bin/bash
 
-############ Script config #############
-## Config can also be placed in ~/.shcrtrc
-source ~/.shcrtrc 2> /dev/null
-
+if [ -f ~/.shcrtrc ]; then
+  source ~/.shcrtrc 
+else
+  cat > ~/.shcrtrc << EOF
 ## GUI mode
 #
 # Console based:
@@ -26,7 +26,27 @@ source ~/.shcrtrc 2> /dev/null
 # On WSL it needs to be a Linux path!
 
 #export crtconfig="/your/path/to/Config"
-########### /Script config #############
+
+## Session default action
+# You can define the action that will be run when you select a session
+# file. Default is "ask"
+# - ask
+# - print
+# - exec_ssh
+# - exec_sftp
+
+#export default_action="ask"
+
+## SFTP runner
+# To run a SFTP program, you need to specify an helper command.
+# It needs to accept an SSH-like command:
+# sftp_client_runner user@host -p port
+#
+# A FileZilla runner is provided and it should work on GNU/Linux and WSL
+
+#export sftp_client_runner=run_filezilla
+EOF
+fi
 
 function is_wsl {
   grep -q Microsoft /proc/version
@@ -54,6 +74,9 @@ export supertitle="shcrt"
 export SHELL_LIBRARY_PATH="$SHELL_LIBRARY_PATH:$DIR/easybashgui/lib"
 export PATH="$PATH:$DIR/easybashgui/src"
 source easybashgui
+
+source "$DIR/sftp_runners.sh"
+
 function wsl_win_var {
   cmd.exe /C "echo $1" | tr -d '\r'
 }
@@ -113,6 +136,9 @@ else
   query_question="🔍 Enter search query: "
   now_at_entry="📍 Now at: "
 fi
+run_ssh_entry="Run SSH"
+run_sftp_entry="Run SFTP client"
+print_details_entry="Print details"
 
 session_path="$(scrt_session_path)"
 current_path="."
@@ -141,6 +167,13 @@ function find_files_or_symlinks {
   done < <(find $@)
 }
 
+function scrt_session_name {
+  local file="$1"
+
+  proto="$(cat "$file" | grep 'S:"Protocol Name"' | cut -d '=' -f 2 | tr -d '\r')"
+  echo "$file_char $(echo "$(basename "$file")" | sed 's/.ini$//') ($proto)"
+}
+
 function scrt_ls {
   cwd="$(pwd)"
   cd "$(scrt_pwd)"
@@ -150,8 +183,7 @@ function scrt_ls {
   done
 
   find_files_or_symlinks -maxdepth 1 -mindepth 1 | grep '.ini$' | grep -v 'Default.ini' | grep -v '__FolderData__.ini' | sort | sed 's|./||' | while read file; do
-    proto="$(cat "$file" | grep 'S:"Protocol Name"' | cut -d '=' -f 2 | tr -d '\r')"
-    echo "$file_char $(echo "$file" | sed 's/.ini$//') ($proto)\\$file"
+    echo "$(scrt_session_name "$file")\\$file"
   done
 
   cd "$cwd"
@@ -199,7 +231,7 @@ function scrt_search {
       scrt_cd "$menu_choice"
       return 1
     else
-      scrt_session "$menu_choice"
+      scrt_session_run "$menu_choice"
     fi
   fi
 }
@@ -223,34 +255,26 @@ function scrt_menu {
   choice="$(echo "$listing" | grep "$menu_choice" | cut -d "\\" -f 2)"
   choice_path="$(scrt_pwd)/$choice"
 
-  #echo "HERE MENU"
-  #echo "'$menu_choice' '$up_entry' '$search_entry'"
-  #echo "'$choice'"
-  #echo "'$choice_path'"
-
   if [[ "$menu_choice" == "" ]] || [[ "$menu_choice" == "$up_entry" ]]; then
     scrt_cd ..
     if [[ "$current_path" == "" ]] || [[ "$current_path" == ".." ]]; then
       return
-    else
-      scrt_menu
     fi
   elif [[ "$menu_choice" == "$search_entry" ]]; then
     if scrt_search; then
       return
-    else
-      scrt_menu
     fi
   elif [[ "$menu_choice" == "$now_at_entry"* ]]; then
     scrt_menu
   elif [ -d "$choice_path" ]; then
     scrt_cd "$choice"
-    scrt_menu
   elif [ -f "$choice_path" ]; then
-    scrt_session "$choice_path"
+    scrt_session_run "$choice_path"
   else
     alert_message "Could not find selected item \"$menu_choice\""
   fi
+  
+  scrt_menu
 }
 
 function scrt_has_password {
@@ -269,22 +293,87 @@ function scrt_get_cleartext_pwd {
   fi
 }
 
-function scrt_session {
-  if [[ "$mode" == "dialog" ]] || [[ "$supermode" == "dialog" ]]; then
-    clear
+function scrt_session_run {
+  local session="$1"
+
+  if [[ "$default_action" == run* ]]; then
+    # No stack overflows, bitch
+    default_action="ask"
   fi
 
-  session="$1"
+  (type "scrt_session_$default_action") 2>&1 >/dev/null && \
+    "scrt_session_$default_action" "$session" || \
+    scrt_session_ask "$@"
+}
+
+function scrt_session_ask {
+  local session="$1"
+  local file="$(realpath --no-symlinks "$session")"
+
+  menu \
+    "$run_ssh_entry" \
+    "$run_sftp_entry" \
+    "$print_details_entry" \
+    "------" \
+    "Session: $(scrt_session_name "$session")"
+  
+  menu_choice="$(0< "${dir_tmp}/${file_tmp}" )"
+
+  case "$menu_choice" in
+    "$run_ssh_entry")
+      scrt_session_exec_ssh "$file"
+      ;;
+    "$run_sftp_entry")
+      scrt_session_exec_sftp "$file"
+      ;;
+    "$print_details_entry")
+      scrt_session_print "$session"
+      ;;
+    "")
+      return
+      ;;
+  esac
+  
+  scrt_session_ask "$session"
+}
+
+function scrt_session_exec_ssh {
+  local session="$1"
+  
+  scrt_session_copy_pass "$session"
+
   echo
-  echo "Session file:"
-  realpath --no-symlinks "$session"
+
+  cmd="$("$DIR/crt2foss.py" "$session_path/../" "$session" | grep '^ssh')"
+  echo "\$ $cmd"
+  exec $cmd
+}
+
+function scrt_session_exec_sftp {
+  local session="$1"
+  
+  (type "sftp_client_runner") 2>&1 >/dev/null
+
+  if [[ "$?" != 0 ]]; then
+    alert_message "You need to provide an SFTP client helper.\n\nYou can either provide it as a function named\n'sftp_client_runner' in ~/.shcrtrc or place it in \$PATH"
+    return 1
+  fi
+  
+  scrt_session_copy_pass "$session"
+
   echo
-  echo "Commands:"
-  "$DIR/crt2foss.py" "$session_path/../" "$session"
+
+  cmd="$("$DIR/crt2foss.py" "$session_path/../" "$session" | grep '^ssh' | sed 's/^ssh/sftp_client_runner/')"
+  $cmd
+  exit
+}
+
+function scrt_session_copy_pass {
+  local session="$1"
 
   if scrt_has_password "$session"; then
     echo
-    if scrt_get_cleartext_pwd "$session" | tr -d '\r\n' | copy_to_clipboard; then
+    if scrt_get_cleartext_pwd "$session" 2> /dev/null | tr -d '\r\n' | copy_to_clipboard; then
       echo "Password copied to clipboard."
     else
       echo "Unable to copy password to clipboard."
@@ -293,7 +382,26 @@ function scrt_session {
         [Yy]*) scrt_get_cleartext_pwd "$session";;
       esac
     fi
-  fi    
+  fi
+}
+
+function scrt_session_print {
+  if [[ "$mode" == "dialog" ]] || [[ "$supermode" == "dialog" ]]; then
+    clear
+  fi
+
+  local session="$1"
+
+  echo
+  echo "Session file:"
+  realpath --no-symlinks "$session"
+  echo
+  echo "Commands:"
+  "$DIR/crt2foss.py" "$session_path/../" "$session"
+
+  scrt_session_copy_pass "$session"
+  
+  exit
 }
 
 function main {
