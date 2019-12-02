@@ -4,13 +4,14 @@ SecureCRT session browser for GNU/Linux and Windows Subsystem for Linux.
 
 It should also work on macOS with some changes but YMMV.
 
-At early stages, not heavily tested. Alpha quality.
+Beta quality. I use it on a daily basis, it should work in most cases.
 
 ## Features
 
 - Browse SecureCRT sessions
 - Search through them
 - Parse SSH sessions and generate a OpenSSH command line
+- Run SSH or an SFTP client such as FileZilla
 - Password is automatically copied to clipboard if found
 
 ## How to use
