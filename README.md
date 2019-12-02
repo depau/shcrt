@@ -99,6 +99,37 @@ Overrides default SecureCRT config paths:
 - GNU/Linux: `~/.vandyke/SecureCRT/Config`
 - Windows: `%APPDATA%/VanDyke/Config` (⇒ usually `/mnt/c/Users/your.user/AppData/VanDyke/Config`)
 
+### SFTP client helper
+
+In order to run an SFTP client, a helper script/function must be provided.
+The helper needs to accept a ssh-like command line. It can be provided as a bash function or as a binary in `$PATH`.
+
+By default, if nothing is provided the program will display an error message.
+
+A FileZilla helper is provided and it should work on GNU/Linux and Windows on WSL.
+To enable it, add the following to your `.shcrtrc`:
+
+```bash
+function sftp_client_runner {
+  run_filezilla "$@";
+}
+```
+
+The FileZilla helper source code can be found in `sftp_runners.sh`
+
+### Default session action
+```bash
+export default_action="ask"
+```
+
+Sets an action that will always be run immediately when selecting a session.
+Default is `ask`. Available options are:
+
+- `ask`: let user pick an action from a menu
+- `print`: print session details to console and exit
+- `exec_ssh`: execute ssh
+- `exec_sftp`: execute SFTP helper (it needs to be provided)
+
 ## Bugs
 
 I expect it to be full of bugs; so should you.
