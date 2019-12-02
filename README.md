@@ -64,6 +64,8 @@ Needless to say, unless you're using `none`, the desired GUI back-end needs to b
 If you're using WSL and you don't want to use a terminal-based GUI, you need an X11 server such as [VcXsrv](https://sourceforge.net/projects/vcxsrv/).
 Otherwise you can use Zenity for Windows.
 
+Default is determined by EasyBashGUI. On GNU/Linux it will pick a GUI dialog that fits with the running desktop environment, falling back to a TUI dialog. On Windows, a TUI dialog will run unless configured.
+
 #### Zenity on Windows
 
 The script includes an experimental wrapper for [native Windows Zenity](https://github.com/maravento/winzenity) on WSL.

@@ -138,7 +138,7 @@ else
 fi
 run_ssh_entry="Run SSH"
 run_sftp_entry="Run SFTP client"
-print_details_entry="Print details"
+print_details_entry="Print details and exit"
 
 session_path="$(scrt_session_path)"
 current_path="."
