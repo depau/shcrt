@@ -33,7 +33,26 @@ function sftp_uri_from_ssh_cmd {
   local port="$(get_port_from_args "$@")"
   local dest="$(get_destination_from_args "$@")"
 
-  echo -n "sftp://$dest"
+  if [[ "$dest" == *@* ]]; then
+    local user="$(echo "$dest" | cut -d "@" -f 1)"
+    local host="$(echo "$dest" | cut -d "@" -f 2)"
+  else
+    local user=""
+    local host=""
+  fi
+
+  if [[ "$host" == *:* ]]; then
+    # Host is an IPv6 address (most likely)
+    local host="[$host]"
+  fi
+
+  echo -n "sftp://"
+
+  if [[ "$user" != "" ]]; then
+    echo -n "${user}@"
+  fi
+
+  echo -n "$host"
 
   if [[ "$port" == "" ]]; then
     echo
