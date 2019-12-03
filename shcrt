@@ -340,8 +340,8 @@ function scrt_session_ask {
 function scrt_session_exec_ssh {
   local session="$1"
   
+  scrt_cleanup_console
   scrt_session_copy_pass "$session"
-
   echo
 
   cmd="$("$DIR/crt2foss.py" "$session_path/../" "$session" | grep '^ssh')"
@@ -356,9 +356,9 @@ function scrt_session_exec_sftp {
     alert_message "You need to provide an SFTP client helper.\nYou can set one in ~/.shcrtrc."
     return 1
   fi
-  
-  scrt_session_copy_pass "$session"
 
+  scrt_cleanup_console
+  scrt_session_copy_pass "$session"
   echo
 
   cmd="$("$DIR/crt2foss.py" "$session_path/../" "$session" | grep '^ssh' | sed 's/^ssh //')"
@@ -383,12 +383,16 @@ function scrt_session_copy_pass {
   fi
 }
 
-function scrt_session_print {
+function scrt_cleanup_console {
   if [[ "$mode" == "dialog" ]] || [[ "$supermode" == "dialog" ]]; then
     clear
   fi
+}
 
+function scrt_session_print {
   local session="$1"
+
+  scrt_cleanup_console
 
   echo
   echo "Session file:"
