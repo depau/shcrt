@@ -252,7 +252,7 @@ function scrt_menu {
   IFS="$IFSBAK"
 
   menu_choice="$(0< "${dir_tmp}/${file_tmp}" )"
-  choice="$(echo "$listing" | grep "$menu_choice" | cut -d "\\" -f 2)"
+  choice="$(echo "$listing" | grep "$menu_choice\\\\" | cut -d "\\" -f 2)"
   choice_path="$(scrt_pwd)/$choice"
 
   if [[ "$menu_choice" == "" ]] || [[ "$menu_choice" == "$up_entry" ]]; then
