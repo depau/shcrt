@@ -49,7 +49,7 @@ EOF
 fi
 
 function is_wsl {
-  grep -q Microsoft /proc/version
+  grep -q Microsoft /proc/version || grep -q 'WSL2' /proc/version
   return $?
 }
 
