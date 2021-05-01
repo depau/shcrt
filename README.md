@@ -15,6 +15,7 @@ Beta quality. I use it on a daily basis, it should work in most cases.
 - Parse SSH sessions and generate a OpenSSH command line
 - Run SSH or an SFTP client such as FileZilla
 - Password is automatically copied to clipboard if found
+- Works with WSL1 and WSL2 - session files are read from the Windows SecureCRT installation
 
 ## How to use
 
@@ -69,6 +70,8 @@ Otherwise you can use Zenity for Windows.
 Default is determined by EasyBashGUI. On GNU/Linux it will pick a GUI dialog that fits with the running desktop environment, falling back to a TUI dialog. On Windows, a TUI dialog will run unless configured.
 
 #### Zenity on Windows
+
+*Note: This was only tested on WSL1. WSL2 might have additional shenanigans.*
 
 The script includes an experimental wrapper for [native Windows Zenity](https://github.com/maravento/winzenity) on WSL.
 
